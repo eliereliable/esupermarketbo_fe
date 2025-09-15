@@ -1,0 +1,54 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "esupermarketbo_fe",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--web-hostname=localhost",
+                "--web-port=54821"
+            ]
+        },
+        {
+            "name": "esupermarketbo_fe (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "args": [
+                "--web-hostname=localhost",
+                "--web-port=54821"
+            ]
+        },
+        {
+            "name": "esupermarketbo_fe (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": [
+                "--web-hostname=localhost",
+                "--web-port=54821"
+            ]
+        },
+        {
+            "name": "authentication_repository",
+            "cwd": "packages\\authentication_repository",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "authentication_repository (profile mode)",
+            "cwd": "packages\\authentication_repository",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "authentication_repository (release mode)",
+            "cwd": "packages\\authentication_repository",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
