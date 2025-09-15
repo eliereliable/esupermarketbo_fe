@@ -11,26 +11,8 @@ import 'package:authentication_repository/src/utils/network_utils.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as FSS;
 
 class URLS {
-  // Platform-specific URLs - uncomment the appropriate one for your platform
-
-  // Flutter Web (try this first):
-  // static const String baseUrl = "http://127.0.0.1:7010/api/";
-
-  // Alternative URLs for different platforms:
-  // static const String baseUrl = "http://localhost:7010/api/";
-
-  // Android Emulator:
   static const String baseUrl = "https://localhost:7010/api/";
-
-  // iOS Simulator:
-  // static const String baseUrl = "http://localhost:7010/api/";
-
-  // Physical Device (replace YOUR_COMPUTER_IP with your actual IP):
-  // static const String baseUrl = "http://YOUR_COMPUTER_IP:7010/api/";
-
-  // If your backend DOES use HTTPS with valid certificates:
-  // static const String baseUrl = "https://127.0.0.1:7010/api/";
-
+  static const String verifyOtpUrl = "${baseUrl}Auth/login/verify";
   static const String loginUrl = "${baseUrl}Auth/login";
 }
 
@@ -212,6 +194,65 @@ class JWTAuth implements AbstractAuth {
     } catch (e) {
       String errorMessage = e.toString();
       log("error is $errorMessage");
+    }
+  }
+
+  @override
+  Future verifyOtp({
+    required String otp,
+    required String deviceId,
+    required String email,
+    required bool trust,
+  }) async {
+    try {
+      final response = await _networkUtil.post(
+        URLS.verifyOtpUrl,
+        headers: {'Content-Type': 'application/json'},
+        data: {
+          "otp": otp,
+          "deviceId": deviceId,
+          "email": email,
+          "trust": trust,
+        },
+      );
+
+      if (response is Map<String, dynamic>) {
+        // Build user from successful verification response
+        final Map<String, dynamic> userData = response;
+        final Models.User userResponse = Models.User.fromJson(
+          userData,
+          userData['access_token'] as String? ?? "",
+        );
+        _controller.sink.add(userResponse);
+        _currentUser = userResponse;
+
+        // Persist tokens and user data
+        await _secureStorage.write(
+          key: "jwt_token",
+          value: userResponse.accessToken,
+        );
+        await _secureStorage.write(
+          key: "user_data",
+          value: jsonEncode(userData),
+        );
+        if (userResponse.deviceId != null &&
+            userResponse.deviceId!.isNotEmpty) {
+          await _secureStorage.write(
+            key: "device_token",
+            value: userResponse.deviceId,
+          );
+        }
+
+        // Clear temporary OTP context
+        await _secureStorage.delete(key: "otp_email");
+        await _secureStorage.delete(key: "otp_expires_utc");
+
+        return userData;
+      }
+      return null;
+    } catch (e) {
+      log("verifyOtp error: $e");
+      rethrow;
     }
   }
 

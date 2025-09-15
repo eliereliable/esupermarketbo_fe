@@ -58,6 +58,8 @@ class AppView extends StatelessWidget {
                   deviceId: args['deviceId'] as String,
                   otpExpiresUtc: args['otpExpiresUtc'] as DateTime,
                   email: args['email'] as String,
+                  username: args['username'] as String?,
+                  password: args['password'] as String?,
                 );
               }
               // Fallback: attempt to restore from storage on refresh
@@ -65,12 +67,12 @@ class AppView extends StatelessWidget {
             },
           },
           home: () {
-            // if (state.status == AppStatus.authenticated) {
-            //   return const HomeScreen();
-            // } else if (state.status == AppStatus.unauthenticated) {
-            //   return const LoginScreen();
-            // }
-            // return const LoginScreen(); // Default fallback
+            if (state.status == AppStatus.authenticated) {
+              return const HomeScreen();
+            } else if (state.status == AppStatus.unauthenticated) {
+              return const LoginScreen();
+            }
+            return const LoginScreen(); // Default fallback
           }(),
         );
       },

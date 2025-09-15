@@ -11,6 +11,14 @@ abstract class AbstractAuth {
     required String refreshToken,
     required String deviceId,
   });
+
+ Future<dynamic> verifyOtp({
+    required String otp,
+    required String deviceId,
+    required String email,
+     required bool trust
+  });
+
     Models.User? get currentUser;
   Stream<Models.User> get user;
 }

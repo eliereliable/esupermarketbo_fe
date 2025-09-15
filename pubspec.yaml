@@ -41,6 +41,7 @@ dependencies:
   equatable: ^2.0.7
   flutter_secure_storage: ^9.2.4
   formz: ^0.8.0
+  pinput: ^5.0.2
 
 dev_dependencies:
   flutter_test:
