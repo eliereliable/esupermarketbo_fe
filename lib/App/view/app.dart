@@ -24,7 +24,6 @@ class App extends StatelessWidget {
           final appBloc = AppBloc(
             authenticationRepository: _authenticationRepository,
           );
-          // Dynamic localization service is now initialized in AppBloc._initialize()
           return appBloc;
         },
         child: const AppView(),
@@ -36,56 +35,57 @@ class App extends StatelessWidget {
 class AppView extends StatelessWidget {
   const AppView({super.key});
 
+  static final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
+
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AppBloc, AppState>(
-      builder: (context, state) {
-        final themeManager = ThemeManager();
-        return MaterialApp(
-          title: 'ESuperMarket',
-          theme: themeManager.getThemeData(ThemeType.LightMode, null),
-          themeMode: ThemeMode.light,
-          initialRoute: _getInitialRoute(state),
-          routes: {
-            '/login': (context) => const LoginScreen(),
-            '/home': (context) => const HomeScreen(),
-            '/two-factor': (context) {
-              final args =
-                  ModalRoute.of(context)?.settings.arguments
-                      as Map<String, dynamic>?;
-              if (args != null) {
-                return TwoFactorScreen(
-                  deviceId: args['deviceId'] as String,
-                  otpExpiresUtc: args['otpExpiresUtc'] as DateTime,
-                  email: args['email'] as String,
-                  username: args['username'] as String?,
-                  password: args['password'] as String?,
-                );
-              }
-              // Fallback: attempt to restore from storage on refresh
-              return const _TwoFactorLoader();
-            },
-          },
-          home: () {
-            if (state.status == AppStatus.authenticated) {
-              return const HomeScreen();
-            } else if (state.status == AppStatus.unauthenticated) {
-              return const LoginScreen();
-            }
-            return const LoginScreen(); // Default fallback
-          }(),
-        );
+    return BlocListener<AppBloc, AppState>(
+      listenWhen: (prev, curr) => prev.status != curr.status,
+      listener: (context, state) {
+        final nav = _navKey.currentState;
+        if (nav == null) return;
+        if (state.status == AppStatus.authenticated) {
+          nav.pushNamedAndRemoveUntil('/home', (route) => false);
+        } else if (state.status == AppStatus.unauthenticated) {
+          nav.pushNamedAndRemoveUntil('/login', (route) => false);
+        }
       },
+      child: BlocBuilder<AppBloc, AppState>(
+        builder: (context, state) {
+          final themeManager = ThemeManager();
+          return MaterialApp(
+            navigatorKey: _navKey,
+            title: 'ESuperMarket',
+            theme: themeManager.getThemeData(ThemeType.LightMode, null),
+            themeMode: ThemeMode.light,
+            routes: {
+              '/login': (context) => const LoginScreen(),
+              '/home': (context) => const HomeScreen(),
+              '/two-factor': (context) {
+                final args =
+                    ModalRoute.of(context)?.settings.arguments
+                        as Map<String, dynamic>?;
+                if (args != null) {
+                  return TwoFactorScreen(
+                    deviceId: args['deviceId'] as String,
+                    otpExpiresUtc: args['otpExpiresUtc'] as DateTime,
+                    email: args['email'] as String,
+                    username: args['username'] as String?,
+                    password: args['password'] as String?,
+                  );
+                }
+                // Fallback: attempt to restore from storage on refresh
+                return const _TwoFactorLoader();
+              },
+            },
+            // Provide a minimal placeholder; navigation listener will drive actual route
+            home: state.status == AppStatus.authenticated
+                ? const HomeScreen()
+                : const LoginScreen(),
+          );
+        },
+      ),
     );
-  }
-
-  String _getInitialRoute(AppState state) {
-    if (state.status == AppStatus.authenticated) {
-      return '/home';
-    } else if (state.status == AppStatus.unauthenticated) {
-      return '/login';
-    }
-    return '/login'; // Default fallback
   }
 }
 

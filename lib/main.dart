@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:esupermarketbo_fe/App/view/app.dart';
+import 'package:esupermarketbo_fe/App/view/bloc_observer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -16,7 +18,7 @@ class MyHttpOverrides extends HttpOverrides {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
-  // Bloc.observer = AppBlocObserver();
+   Bloc.observer = AppBlocObserver();
   final authenticationRepository = AuthenticationRepository(
     authenticationMethod: AuthenticationMethods.JWT,
   );

@@ -76,4 +76,14 @@ class AuthenticationRepository {
       trust: trust,
     );
   }
+
+  Future<dynamic> logout({
+    required String refreshToken,
+    required String deviceId,
+  }) async {
+    return await _authPortal!.logout(
+      refreshToken: refreshToken,
+      deviceId: deviceId,
+    );
+  }
 }

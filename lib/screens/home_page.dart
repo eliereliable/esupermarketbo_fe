@@ -13,12 +13,66 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       body: Center(
-        child: Text(
-          displayName != null && displayName.isNotEmpty
-              ? 'Welcome, $displayName'
-              : 'Welcome',
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-          textAlign: TextAlign.center,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                displayName != null && displayName.isNotEmpty
+                    ? 'Welcome, $displayName'
+                    : 'Welcome',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 42,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final refreshToken =
+                        authRepo.currentUser?.refreshToken ?? '';
+                    final deviceId = authRepo.currentUser?.deviceId ?? '';
+                    try {
+                      await authRepo.logout(
+                        refreshToken: refreshToken,
+                        deviceId: deviceId,
+                      );
+                      if (context.mounted) {
+                        Navigator.of(context).pushReplacementNamed('/login');
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to logout: $e')),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 16,
+                    ),
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Logout',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

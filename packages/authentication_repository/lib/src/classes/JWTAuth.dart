@@ -13,7 +13,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart' as FSS;
 class URLS {
   static const String baseUrl = "https://localhost:7010/api/";
   static const String verifyOtpUrl = "${baseUrl}Auth/login/verify";
+  static const String logoutUrl = "${baseUrl}Auth/logout";
   static const String loginUrl = "${baseUrl}Auth/login";
+  // Optional: add refresh endpoint if available
+  static const String refreshUrl = "${baseUrl}Auth/refresh";
 }
 
 class JWTAuth implements AbstractAuth {
@@ -48,10 +51,18 @@ class JWTAuth implements AbstractAuth {
       if (userResponse.accessTokenExpiresUtc != null) {
         DateTime now = DateTime.now();
         if (now.isAfter(userResponse.accessTokenExpiresUtc!)) {
-          refreshToken(
-            deviceId: userResponse.deviceId ?? "",
-            refreshToken: userResponse.refreshToken ?? "",
-          );
+          // Guard: only attempt refresh if we have required data
+          final deviceId = userResponse.deviceId ?? "";
+          final rToken = userResponse.refreshToken ?? "";
+          if (deviceId.isNotEmpty && rToken.isNotEmpty) {
+            await refreshToken(deviceId: deviceId, refreshToken: rToken);
+          } else {
+            // Clear to unauthenticated state
+            await _secureStorage.delete(key: "jwt_token");
+            await _secureStorage.delete(key: "user_data");
+            _controller.sink.add(Models.User.empty);
+            _currentUser = null;
+          }
         } else {
           _controller.sink.add(userResponse);
           _currentUser = userResponse;
@@ -72,6 +83,7 @@ class JWTAuth implements AbstractAuth {
     required String password,
     String? deviceId,
   }) async {
+    final deviceId = await _secureStorage.read(key: "device_token");
     try {
       final response = await _networkUtil.post(
         URLS.loginUrl,
@@ -235,6 +247,10 @@ class JWTAuth implements AbstractAuth {
           key: "user_data",
           value: jsonEncode(userData),
         );
+        await _secureStorage.write(
+          key: "device_token",
+          value: jsonEncode(userData),
+        );
         if (userResponse.deviceId != null &&
             userResponse.deviceId!.isNotEmpty) {
           await _secureStorage.write(
@@ -260,13 +276,98 @@ class JWTAuth implements AbstractAuth {
   Future refreshToken({
     required String refreshToken,
     required String deviceId,
-  }) {
-    // TODO: implement refreshToken
-    throw UnimplementedError();
+  }) async {
+    try {
+      final response = await _networkUtil.post(
+        URLS.refreshUrl,
+        headers: {'Content-Type': 'application/json'},
+        data: {'refresh_token': refreshToken, 'device_id': deviceId},
+      );
+
+      if (response is Map<String, dynamic>) {
+        final Map<String, dynamic> userData = response;
+        final Models.User userResponse = Models.User.fromJson(
+          userData,
+          userData['access_token'] as String? ?? "",
+        );
+        _controller.sink.add(userResponse);
+        _currentUser = userResponse;
+
+        await _secureStorage.write(
+          key: "jwt_token",
+          value: userResponse.accessToken,
+        );
+        await _secureStorage.write(
+          key: "user_data",
+          value: jsonEncode(userData),
+        );
+        if (userResponse.deviceId != null &&
+            userResponse.deviceId!.isNotEmpty) {
+          await _secureStorage.write(
+            key: "device_token",
+            value: userResponse.deviceId,
+          );
+        }
+
+        return userData;
+      }
+
+      // Unexpected response shape: clear auth
+      await _secureStorage.delete(key: "jwt_token");
+      await _secureStorage.delete(key: "user_data");
+      _currentUser = null;
+      _controller.sink.add(Models.User.empty);
+      return null;
+    } catch (e) {
+      log("refreshToken error: $e");
+      // On failure, clear auth
+      await _secureStorage.delete(key: "jwt_token");
+      await _secureStorage.delete(key: "user_data");
+      _currentUser = null;
+      _controller.sink.add(Models.User.empty);
+      rethrow;
+    }
   }
 
   @override
   Models.User? get currentUser {
     return _currentUser;
+  }
+
+  @override
+  Future logout({
+    required String refreshToken,
+    required String deviceId,
+  }) async {
+    final token = await _secureStorage.read(key: "jwt_token");
+    log("token now is $token");
+    try {
+      final response = await _networkUtil.post(
+        URLS.logoutUrl,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        data: {"refresh_token ": refreshToken, "device_id": deviceId},
+      );
+
+      // Expected success response: ["revoked"]
+      if (response is List && response.contains("revoked")) {
+        await _secureStorage.delete(key: "jwt_token");
+        await _secureStorage.delete(key: "user_data");
+        await _secureStorage.delete(key: "device_token");
+        await _secureStorage.delete(key: "otp_email");
+        await _secureStorage.delete(key: "otp_expires_utc");
+
+        _currentUser = null;
+        _controller.sink.add(Models.User.empty);
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      log("logout error: $e");
+      rethrow;
+    }
   }
 }
