@@ -77,13 +77,11 @@ class AuthenticationRepository {
     );
   }
 
-  Future<dynamic> logout({
-    required String refreshToken,
-    required String deviceId,
-  }) async {
+  Future<dynamic> logout(
+ 
+  ) async {
     return await _authPortal!.logout(
-      refreshToken: refreshToken,
-      deviceId: deviceId,
+ 
     );
   }
 }

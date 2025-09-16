@@ -19,10 +19,9 @@ abstract class AbstractAuth {
     required bool trust,
   });
 
-  Future<dynamic> logout({
-    required String refreshToken,
-    required String deviceId,
-  });
+  Future<dynamic> logout(
+
+  );
 
   Models.User? get currentUser;
   Stream<Models.User> get user;

@@ -35,13 +35,10 @@ class HomeScreen extends StatelessWidget {
                 height: 42,
                 child: ElevatedButton(
                   onPressed: () async {
-                    final refreshToken =
-                        authRepo.currentUser?.refreshToken ?? '';
-                    final deviceId = authRepo.currentUser?.deviceId ?? '';
+              
                     try {
                       await authRepo.logout(
-                        refreshToken: refreshToken,
-                        deviceId: deviceId,
+                      
                       );
                       if (context.mounted) {
                         Navigator.of(context).pushReplacementNamed('/login');

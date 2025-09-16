@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,7 +55,8 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
             ).showSnackBar(SnackBar(content: Text(state.error!)));
           }
           if (state.success) {
-            Navigator.of(context).pushReplacementNamed('/home');
+            // Navigation will be handled by AppBloc listener
+            // The user stream will be updated and trigger navigation to home
           }
         },
         child: Scaffold(
@@ -229,7 +232,7 @@ class _TwoFactorScreenState extends State<TwoFactorScreen> {
 
     final trust = await _askTrustDevice(context);
     if (!mounted) return;
-
+    log("here trust is $trust");
     await context.read<TwoFactorCubit>().verify(
       otp: otp,
       deviceId: widget.deviceId,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:authentication_repository/authentication_repository.dart'
@@ -54,6 +55,9 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   }
 
   void _onUserChanged(_AppUserChanged event, Emitter<AppState> emit) {
+    log(
+      'AppBloc: User changed - isEmpty: ${event.user.isEmpty}, user: ${event.user}',
+    );
     themeManager.configure(ThemeType.LightMode);
     if (event.user.isEmpty) {
       emit(const AppState.unauthenticated());

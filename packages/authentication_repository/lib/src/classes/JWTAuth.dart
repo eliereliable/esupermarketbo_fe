@@ -83,7 +83,8 @@ class JWTAuth implements AbstractAuth {
     required String password,
     String? deviceId,
   }) async {
-    final deviceId = await _secureStorage.read(key: "device_token");
+    final deviceIdStorage = await _secureStorage.read(key: "device_token");
+    log("deviceIdStorage is $deviceIdStorage");
     try {
       final response = await _networkUtil.post(
         URLS.loginUrl,
@@ -91,7 +92,7 @@ class JWTAuth implements AbstractAuth {
         data: {
           "username": userName,
           "password": password,
-          if (deviceId != null) "deviceId": deviceId,
+          if (deviceIdStorage != null) "device_id": deviceIdStorage,
         },
       );
 
@@ -115,13 +116,9 @@ class JWTAuth implements AbstractAuth {
                 ? extra['otp_expires_utc'] as String?
                 : null;
 
-            // Set a temporary user with deviceId and email (no tokens yet)
-            final Models.User tempUser = Models.User.empty.copyWith(
-              deviceId: extraDeviceId,
-              email: extraEmail,
-            );
-            _controller.sink.add(tempUser);
-            _currentUser = tempUser;
+            // Don't add temporary user to stream for OTP required responses
+            // This prevents AppBloc from navigating to home when 2FA is required
+            // The LoginCubit will handle navigation to two-factor page
 
             // Persist OTP context for web refresh
             if (extraDeviceId != null && extraDeviceId.isNotEmpty) {
@@ -235,6 +232,9 @@ class JWTAuth implements AbstractAuth {
           userData,
           userData['access_token'] as String? ?? "",
         );
+        log(
+          'JWTAuth: verifyOtp success - adding user to stream: $userResponse',
+        );
         _controller.sink.add(userResponse);
         _currentUser = userResponse;
 
@@ -335,39 +335,18 @@ class JWTAuth implements AbstractAuth {
   }
 
   @override
-  Future logout({
-    required String refreshToken,
-    required String deviceId,
-  }) async {
-    final token = await _secureStorage.read(key: "jwt_token");
-    log("token now is $token");
-    try {
-      final response = await _networkUtil.post(
-        URLS.logoutUrl,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        data: {"refresh_token ": refreshToken, "device_id": deviceId},
-      );
+  Future logout(
 
-      // Expected success response: ["revoked"]
-      if (response is List && response.contains("revoked")) {
-        await _secureStorage.delete(key: "jwt_token");
+  )  async {
+    
+
+           await _secureStorage.delete(key: "jwt_token");
         await _secureStorage.delete(key: "user_data");
-        await _secureStorage.delete(key: "device_token");
+        // await _secureStorage.delete(key: "device_token");
         await _secureStorage.delete(key: "otp_email");
         await _secureStorage.delete(key: "otp_expires_utc");
 
         _currentUser = null;
         _controller.sink.add(Models.User.empty);
-        return true;
-      }
-
-      return false;
-    } catch (e) {
-      log("logout error: $e");
-      rethrow;
-    }
   }
 }
