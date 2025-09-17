@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'package:authentication_repository/src/authentication_repository.dart';
 import 'package:authentication_repository/src/classes/AbstractAuth.dart';
 
@@ -11,12 +12,20 @@ import 'package:authentication_repository/src/utils/network_utils.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as FSS;
 
 class URLS {
-  static const String baseUrl = "https://localhost:7010/api/";
-  static const String verifyOtpUrl = "${baseUrl}Auth/login/verify";
-  static const String logoutUrl = "${baseUrl}Auth/logout";
-  static const String loginUrl = "${baseUrl}Auth/login";
-  // Optional: add refresh endpoint if available
-  static const String refreshUrl = "${baseUrl}Auth/refresh";
+  static String get baseUrl {
+    if (Platform.isAndroid) {
+      return "http://10.0.2.2:7010/api/"; // Android emulator
+    } else if (Platform.isIOS) {
+      return "http://localhost:7010/api/"; // iOS simulator
+    } else {
+      return "http://localhost:7010/api/"; // Web/Desktop
+    }
+  }
+
+  static String get verifyOtpUrl => "${baseUrl}Auth/login/verify";
+  static String get logoutUrl => "${baseUrl}Auth/logout";
+  static String get loginUrl => "${baseUrl}Auth/login";
+  static String get refreshUrl => "${baseUrl}Auth/refresh";
 }
 
 class JWTAuth implements AbstractAuth {
@@ -335,18 +344,14 @@ class JWTAuth implements AbstractAuth {
   }
 
   @override
-  Future logout(
+  Future logout() async {
+    await _secureStorage.delete(key: "jwt_token");
+    await _secureStorage.delete(key: "user_data");
+    // await _secureStorage.delete(key: "device_token");
+    await _secureStorage.delete(key: "otp_email");
+    await _secureStorage.delete(key: "otp_expires_utc");
 
-  )  async {
-    
-
-           await _secureStorage.delete(key: "jwt_token");
-        await _secureStorage.delete(key: "user_data");
-        // await _secureStorage.delete(key: "device_token");
-        await _secureStorage.delete(key: "otp_email");
-        await _secureStorage.delete(key: "otp_expires_utc");
-
-        _currentUser = null;
-        _controller.sink.add(Models.User.empty);
+    _currentUser = null;
+    _controller.sink.add(Models.User.empty);
   }
 }

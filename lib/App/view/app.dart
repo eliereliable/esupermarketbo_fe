@@ -1,7 +1,7 @@
 import 'package:authentication_repository/authentication_repository.dart';
 import 'package:esupermarketbo_fe/App/bloc/app_bloc.dart';
 import 'package:esupermarketbo_fe/ThemeManager/theme_mnager.dart';
-import 'package:esupermarketbo_fe/screens/home_page.dart';
+import 'package:esupermarketbo_fe/screens/home/home_page.dart';
 import 'package:esupermarketbo_fe/screens/login/view/login_page.dart';
 import 'package:esupermarketbo_fe/screens/two_factor/view/two_factor_page.dart';
 import 'package:flutter/material.dart';

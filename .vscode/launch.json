@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "esupermarketbo_fe",
+            "name": "esupermarketbo_fe (Web)",
             "request": "launch",
             "type": "dart",
             "args": [
@@ -11,7 +11,13 @@
             ]
         },
         {
-            "name": "esupermarketbo_fe (profile mode)",
+            "name": "esupermarketbo_fe (Android)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "emulator-5554"
+        },
+        {
+            "name": "esupermarketbo_fe (Web Profile)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile",
@@ -21,7 +27,14 @@
             ]
         },
         {
-            "name": "esupermarketbo_fe (release mode)",
+            "name": "esupermarketbo_fe (Android Profile)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "deviceId": "emulator-5554"
+        },
+        {
+            "name": "esupermarketbo_fe (Web Release)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release",
@@ -29,6 +42,13 @@
                 "--web-hostname=localhost",
                 "--web-port=54821"
             ]
+        },
+        {
+            "name": "esupermarketbo_fe (Android Release)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "deviceId": "emulator-5554"
         },
         {
             "name": "authentication_repository",
