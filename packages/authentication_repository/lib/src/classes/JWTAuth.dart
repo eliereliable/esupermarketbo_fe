@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:authentication_repository/src/authentication_repository.dart';
 import 'package:authentication_repository/src/classes/AbstractAuth.dart';
 
@@ -13,12 +14,21 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart' as FSS;
 
 class URLS {
   static String get baseUrl {
+    // Web: derive from current location to avoid mismatched host/ports
+    if (kIsWeb) {
+      final Uri current = Uri.base;
+      final String scheme = current.scheme.isNotEmpty ? current.scheme : 'https';
+      final String host = current.host.isNotEmpty ? current.host : 'localhost';
+      // If your API runs on a different port than the app, change 7010 accordingly
+      return "https://localhost:7010/api/";
+    }
+
     if (Platform.isAndroid) {
-      return "http://10.0.2.2:7010/api/"; // Android emulator
+      return "https://10.0.2.2:7010/api/"; // Android emulator
     } else if (Platform.isIOS) {
-      return "http://localhost:7010/api/"; // iOS simulator
+      return "https://localhost:7010/api/"; // iOS simulator
     } else {
-      return "http://localhost:7010/api/"; // Web/Desktop
+      return "https://localhost:7010/api/"; // Desktop
     }
   }
 

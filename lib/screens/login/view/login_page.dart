@@ -43,6 +43,10 @@ class _LoginViewState extends State<LoginView> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocListener<LoginCubit, LoginState>(
+        listenWhen: (previous, current) {
+          // Only react when state type actually changes to prevent repeated navigations
+          return previous.runtimeType != current.runtimeType;
+        },
         listener: (context, state) {
           if (state is LoginSuccess) {
             // Navigate to home page
